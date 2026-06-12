@@ -17,9 +17,9 @@ public interface RegistrarParcelasCoreMapper {
     ) {
         return registrarParcelasCoreDto.contratos()
                 .stream()
-                .flatMap(ContratoCoreDto contrato -> contrato.parcelas()
+                .flatMap((ContratoCoreDto contrato) -> contrato.parcelas()
                         .stream()
-                        .map(ParcelaCoreDto parcela -> toParcelaServiceDto(
+                        .map((ParcelaCoreDto parcela) -> toParcelaServiceDto(
                                 registrarParcelasCoreDto.numeroAcordo(),
                                 contrato,
                                 parcela
