@@ -1,11 +1,11 @@
 package br.com.itau.wi3.servicoparcela.domains.core;
 
-import br.com.itau.wi3.servicoparcela.domains.core.dto.ContratoCoreDto;
-import br.com.itau.wi3.servicoparcela.domains.core.dto.ParcelaCoreDto;
 import br.com.itau.wi3.servicoparcela.domains.core.dto.RegistrarParcelasCoreDto;
 import br.com.itau.wi3.servicoparcela.domains.mapper.RegistrarParcelasCoreMapper;
 import br.com.itau.wi3.servicoparcela.service.ParcelaService;
 import br.com.itau.wi3.servicoparcela.service.dto.ParcelaServiceDto;
+import br.com.itau.wi3.servicoparcela.support.JsonFixture;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.Mockito.inOrder;
@@ -35,29 +34,14 @@ class RegistrarParcelasCoreTest {
     @Test
     @DisplayName("Deve mapear o core dto e registrar as parcelas no serviço")
     void deveMapearERegistrarParcelas() {
-        final RegistrarParcelasCoreDto registrarParcelasCoreDto = new RegistrarParcelasCoreDto(
-                123L,
-                List.of(new ContratoCoreDto(
-                        456L,
-                        789,
-                        List.of(new ParcelaCoreDto(
-                                (short) 1,
-                                new BigDecimal("10.00"),
-                                new BigDecimal("100.00"),
-                                new BigDecimal("90.00")
-                        ))
-                ))
+        final RegistrarParcelasCoreDto registrarParcelasCoreDto = JsonFixture.as(
+                "/fixtures/registrar-parcelas-core-dto.json",
+                RegistrarParcelasCoreDto.class
         );
-
-        final List<ParcelaServiceDto> parcelaServiceDtos = List.of(new ParcelaServiceDto(
-                (short) 1,
-                456L,
-                123L,
-                789,
-                new BigDecimal("10.00"),
-                new BigDecimal("100.00"),
-                new BigDecimal("90.00")
-        ));
+        final List<ParcelaServiceDto> parcelaServiceDtos = JsonFixture.as(
+                "/fixtures/parcela-service-dtos.json",
+                new TypeReference<List<ParcelaServiceDto>>() {}
+        );
 
         when(registrarParcelasCoreMapper.toParcelaServiceDtos(registrarParcelasCoreDto))
                 .thenReturn(parcelaServiceDtos);

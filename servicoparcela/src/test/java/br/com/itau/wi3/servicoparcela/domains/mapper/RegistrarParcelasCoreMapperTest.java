@@ -4,11 +4,11 @@ import br.com.itau.wi3.servicoparcela.domains.core.dto.ContratoCoreDto;
 import br.com.itau.wi3.servicoparcela.domains.core.dto.ParcelaCoreDto;
 import br.com.itau.wi3.servicoparcela.domains.core.dto.RegistrarParcelasCoreDto;
 import br.com.itau.wi3.servicoparcela.service.dto.ParcelaServiceDto;
+import br.com.itau.wi3.servicoparcela.support.JsonFixture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,34 +17,14 @@ class RegistrarParcelasCoreMapperTest {
 
     private final RegistrarParcelasCoreMapper mapper = Mappers.getMapper(RegistrarParcelasCoreMapper.class);
 
+    private final RegistrarParcelasCoreDto registrarParcelasCoreDto = JsonFixture.as(
+            "/fixtures/registrar-parcelas-core-dto.json",
+            RegistrarParcelasCoreDto.class
+    );
+
     @Test
     @DisplayName("Deve achatar contratos e parcelas do acordo em uma lista de ParcelaServiceDto")
     void deveAchatarContratosEParcelas() {
-        final ParcelaCoreDto parcela1 = new ParcelaCoreDto(
-                (short) 1,
-                new BigDecimal("10.00"),
-                new BigDecimal("100.00"),
-                new BigDecimal("90.00")
-        );
-        final ParcelaCoreDto parcela2 = new ParcelaCoreDto(
-                (short) 2,
-                new BigDecimal("20.00"),
-                new BigDecimal("200.00"),
-                new BigDecimal("180.00")
-        );
-        final ParcelaCoreDto parcela3 = new ParcelaCoreDto(
-                (short) 1,
-                new BigDecimal("30.00"),
-                new BigDecimal("300.00"),
-                new BigDecimal("270.00")
-        );
-
-        final ContratoCoreDto contrato1 = new ContratoCoreDto(456L, 789, List.of(parcela1, parcela2));
-        final ContratoCoreDto contrato2 = new ContratoCoreDto(654L, 987, List.of(parcela3));
-
-        final RegistrarParcelasCoreDto registrarParcelasCoreDto =
-                new RegistrarParcelasCoreDto(123L, List.of(contrato1, contrato2));
-
         final List<ParcelaServiceDto> parcelaServiceDtos =
                 mapper.toParcelaServiceDtos(registrarParcelasCoreDto);
 
@@ -75,35 +55,30 @@ class RegistrarParcelasCoreMapperTest {
     @Test
     @DisplayName("Deve retornar lista vazia quando o acordo não possuir contratos")
     void deveRetornarListaVaziaQuandoNaoHouverContratos() {
-        final RegistrarParcelasCoreDto registrarParcelasCoreDto =
-                new RegistrarParcelasCoreDto(123L, List.of());
+        final RegistrarParcelasCoreDto semContratos = new RegistrarParcelasCoreDto(123L, List.of());
 
-        final List<ParcelaServiceDto> parcelaServiceDtos =
-                mapper.toParcelaServiceDtos(registrarParcelasCoreDto);
-
-        assertThat(parcelaServiceDtos).isEmpty();
+        assertThat(mapper.toParcelaServiceDtos(semContratos)).isEmpty();
     }
 
     @Test
     @DisplayName("Deve mapear acordo, contrato e parcela para ParcelaServiceDto")
     void deveMapearParcelaServiceDto() {
-        final ContratoCoreDto contrato = new ContratoCoreDto(456L, 789, List.of());
-        final ParcelaCoreDto parcela = new ParcelaCoreDto(
-                (short) 5,
-                new BigDecimal("1.50"),
-                new BigDecimal("15.00"),
-                new BigDecimal("13.50")
-        );
+        final ContratoCoreDto contrato = registrarParcelasCoreDto.contratos().get(1);
+        final ParcelaCoreDto parcela = contrato.parcelas().get(0);
 
-        final ParcelaServiceDto parcelaServiceDto = mapper.toParcelaServiceDto(123L, contrato, parcela);
+        final ParcelaServiceDto parcelaServiceDto = mapper.toParcelaServiceDto(
+                registrarParcelasCoreDto.numeroAcordo(),
+                contrato,
+                parcela
+        );
 
         assertThat(parcelaServiceDto).isNotNull();
         assertThat(parcelaServiceDto.numeroAcordo()).isEqualTo(123L);
-        assertThat(parcelaServiceDto.numeroContrato()).isEqualTo(456L);
-        assertThat(parcelaServiceDto.codigoProdutoOperacional()).isEqualTo(789);
-        assertThat(parcelaServiceDto.numeroParcela()).isEqualTo((short) 5);
-        assertThat(parcelaServiceDto.valorDescontoParcela()).isEqualByComparingTo("1.50");
-        assertThat(parcelaServiceDto.valorBrutoParcela()).isEqualByComparingTo("15.00");
-        assertThat(parcelaServiceDto.valorLiquidoParcela()).isEqualByComparingTo("13.50");
+        assertThat(parcelaServiceDto.numeroContrato()).isEqualTo(654L);
+        assertThat(parcelaServiceDto.codigoProdutoOperacional()).isEqualTo(987);
+        assertThat(parcelaServiceDto.numeroParcela()).isEqualTo((short) 1);
+        assertThat(parcelaServiceDto.valorDescontoParcela()).isEqualByComparingTo("30.00");
+        assertThat(parcelaServiceDto.valorBrutoParcela()).isEqualByComparingTo("300.00");
+        assertThat(parcelaServiceDto.valorLiquidoParcela()).isEqualByComparingTo("270.00");
     }
 }
