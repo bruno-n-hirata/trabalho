@@ -11,7 +11,7 @@ public record RegistrarParcelasRequest(
         @NotNull(message = "Número do acordo é obrigatório")
         Long numeroAcordo,
 
-        @NotEmpty(message = "A lista de contratos não pode ser vazia")
+        @NotEmpty(message = "Acordo deve possuir ao menos um contrato")
         @Valid
         List<ContratoRequest> contratos
 ) {}
