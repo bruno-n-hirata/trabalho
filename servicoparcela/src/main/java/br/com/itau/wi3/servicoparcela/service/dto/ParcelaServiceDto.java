@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 public record ParcelaServiceDto(
         Long numeroContrato,
+        Long numeroAcordo,
         Integer codigoProdutoOperacional,
         Integer numeroParcela,
         BigDecimal valorParcela,

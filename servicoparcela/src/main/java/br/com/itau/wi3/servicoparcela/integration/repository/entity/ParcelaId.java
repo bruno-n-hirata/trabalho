@@ -23,4 +23,10 @@ public class ParcelaId implements Serializable {
 
     @Column(name = "numero_parcela")
     private Integer numeroParcela;
+
+    @Column(name = "numero_acordo")
+    private Long numeroAcordo;
+
+    @Column(name = "codigo_produto_operacional")
+    private Integer codigoProdutoOperacional;
 }

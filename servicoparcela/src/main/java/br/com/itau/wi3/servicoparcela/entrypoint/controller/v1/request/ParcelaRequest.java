@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record ParcelasRequest(
+public record ParcelaRequest(
 
         @NotNull(message = "Número da parcela é obrigatório")
         Integer numeroParcela,

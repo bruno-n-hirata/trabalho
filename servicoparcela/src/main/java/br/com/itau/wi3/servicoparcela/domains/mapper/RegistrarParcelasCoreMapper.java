@@ -2,27 +2,26 @@ package br.com.itau.wi3.servicoparcela.domains.mapper;
 
 import br.com.itau.wi3.servicoparcela.domains.core.dto.ContratoCoreDto;
 import br.com.itau.wi3.servicoparcela.domains.core.dto.ParcelaCoreDto;
-import br.com.itau.wi3.servicoparcela.domains.core.dto.RegistrarParcelasCoreDto;
 import br.com.itau.wi3.servicoparcela.service.dto.ParcelaServiceDto;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface RegistrarParcelasCoreMapper {
 
-    List<ParcelaServiceDto> toParcelaServiceDtoList(RegistrarParcelasCoreDto registrarParcelasCoreDto);
-
-    default List<ParcelaServiceDto> fromContratos(List<ContratoCoreDto> contratos) {
+    default List<ParcelaServiceDto> fromContratos(final Long numeroAcordo, final List<ContratoCoreDto> contratos) {
         return contratos.stream()
                 .flatMap(contrato -> contrato.parcelas().stream()
-                        .map(parcela -> toParcelaServiceDto(contrato, parcela)))
+                        .map(parcela -> toParcelaServiceDto(numeroAcordo, contrato, parcela)))
                 .toList();
     }
 
-    default ParcelaServiceDto toParcelaServiceDto(ContratoCoreDto contrato, ParcelaCoreDto parcela) {
+    default ParcelaServiceDto toParcelaServiceDto(final Long numeroAcordo, final ContratoCoreDto contrato, final ParcelaCoreDto parcela) {
         return new ParcelaServiceDto(
                 contrato.numeroContrato(),
+                numeroAcordo,
                 contrato.codigoProdutoOperacional(),
                 parcela.numeroParcela(),
                 parcela.valorParcela(),
