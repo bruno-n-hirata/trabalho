@@ -4,17 +4,21 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 public record ParcelaRequest(
 
         @NotNull(message = "Número da parcela é obrigatório")
-        Integer numeroParcela,
+        Short numeroParcela,
 
-        @NotNull(message = "Valor da parcela é obrigatório")
-        @Positive(message = "Valor da parcela deve ser positivo")
-        BigDecimal valorParcela,
+        @NotNull(message = "Valor de desconto da parcela é obrigatório")
+        @Positive(message = "Valor de desconto deve ser positivo")
+        BigDecimal valorDescontoParcela,
 
-        @NotNull(message = "Data de vencimento é obrigatória")
-        LocalDate dataVencimento
+        @NotNull(message = "Valor bruto da parcela é obrigatório")
+        @Positive(message = "Valor bruto deve ser positivo")
+        BigDecimal valorBrutoParcela,
+
+        @NotNull(message = "Valor líquido da parcela é obrigatório")
+        @Positive(message = "Valor líquido deve ser positivo")
+        BigDecimal valorLiquidoParcela
 ) {}

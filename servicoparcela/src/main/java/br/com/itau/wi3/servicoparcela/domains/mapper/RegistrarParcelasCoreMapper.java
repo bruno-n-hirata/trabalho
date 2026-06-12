@@ -20,12 +20,13 @@ public interface RegistrarParcelasCoreMapper {
 
     default ParcelaServiceDto toParcelaServiceDto(final Long numeroAcordo, final ContratoCoreDto contrato, final ParcelaCoreDto parcela) {
         return new ParcelaServiceDto(
+                parcela.numeroParcela(),
                 contrato.numeroContrato(),
                 numeroAcordo,
                 contrato.codigoProdutoOperacional(),
-                parcela.numeroParcela(),
-                parcela.valorParcela(),
-                parcela.dataVencimento()
+                parcela.valorDescontoParcela(),
+                parcela.valorBrutoParcela(),
+                parcela.valorLiquidoParcela()
         );
     }
 }
