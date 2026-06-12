@@ -65,13 +65,12 @@ class ParcelaRepositoryIntegrationTest {
     @Test
     @DisplayName("Deve diferenciar parcelas que variam em apenas um campo do id composto")
     void deveDiferenciarParcelasPorCadaCampoDoIdComposto() {
-        parcelaRepository.saveAllAndFlush(List.of(
-                parcelaEntity((short) 1, 456L, 123L, 789),
-                parcelaEntity((short) 2, 456L, 123L, 789),
-                parcelaEntity((short) 1, 999L, 123L, 789),
-                parcelaEntity((short) 1, 456L, 999L, 789),
-                parcelaEntity((short) 1, 456L, 123L, 999)
-        ));
+        final List<ParcelaEntity> variacoesDeId = JsonFixture.as(
+                "/fixtures/parcela-entities-variacao-id.json",
+                new TypeReference<List<ParcelaEntity>>() {}
+        );
+
+        parcelaRepository.saveAllAndFlush(variacoesDeId);
 
         assertThat(parcelaRepository.findAll()).hasSize(5);
         assertThat(parcelaRepository.findById(parcelaId((short) 1, 456L, 999L, 789))).isPresent();
@@ -83,17 +82,6 @@ class ParcelaRepositoryIntegrationTest {
                 "/fixtures/parcela-entities.json",
                 new TypeReference<List<ParcelaEntity>>() {}
         );
-    }
-
-    private ParcelaEntity parcelaEntity(
-            final Short numeroParcela,
-            final Long numeroContrato,
-            final Long numeroAcordo,
-            final Integer codigoProdutoOperacional
-    ) {
-        final ParcelaEntity parcelaEntity = parcelaEntities().get(0);
-        parcelaEntity.setId(parcelaId(numeroParcela, numeroContrato, numeroAcordo, codigoProdutoOperacional));
-        return parcelaEntity;
     }
 
     private ParcelaId parcelaId(
