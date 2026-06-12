@@ -85,14 +85,20 @@ class ParcelaRepositoryIntegrationTest {
         );
     }
 
+    // Cada entidade é construída do zero: instâncias compartilhadas entre os
+    // elementos do saveAll fariam o último id sobrescrever os demais,
+    // colapsando os 5 registros em 1.
     private ParcelaEntity parcelaEntity(
             final Short numeroParcela,
             final Long numeroContrato,
             final Long numeroAcordo,
             final Integer codigoProdutoOperacional
     ) {
-        final ParcelaEntity parcelaEntity = parcelaEntities().get(0);
+        final ParcelaEntity parcelaEntity = new ParcelaEntity();
         parcelaEntity.setId(parcelaId(numeroParcela, numeroContrato, numeroAcordo, codigoProdutoOperacional));
+        parcelaEntity.setValorDescontoParcela(new BigDecimal("10.00"));
+        parcelaEntity.setValorBrutoParcela(new BigDecimal("100.00"));
+        parcelaEntity.setValorLiquidoParcela(new BigDecimal("90.00"));
         return parcelaEntity;
     }
 
