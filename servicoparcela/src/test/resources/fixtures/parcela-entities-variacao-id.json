@@ -1,0 +1,57 @@
+[
+  {
+    "id": {
+      "numeroParcela": 1,
+      "numeroContrato": 456,
+      "numeroAcordo": 123,
+      "codigoProdutoOperacional": 789
+    },
+    "valorDescontoParcela": 10.00,
+    "valorBrutoParcela": 100.00,
+    "valorLiquidoParcela": 90.00
+  },
+  {
+    "id": {
+      "numeroParcela": 2,
+      "numeroContrato": 456,
+      "numeroAcordo": 123,
+      "codigoProdutoOperacional": 789
+    },
+    "valorDescontoParcela": 10.00,
+    "valorBrutoParcela": 100.00,
+    "valorLiquidoParcela": 90.00
+  },
+  {
+    "id": {
+      "numeroParcela": 1,
+      "numeroContrato": 999,
+      "numeroAcordo": 123,
+      "codigoProdutoOperacional": 789
+    },
+    "valorDescontoParcela": 10.00,
+    "valorBrutoParcela": 100.00,
+    "valorLiquidoParcela": 90.00
+  },
+  {
+    "id": {
+      "numeroParcela": 1,
+      "numeroContrato": 456,
+      "numeroAcordo": 999,
+      "codigoProdutoOperacional": 789
+    },
+    "valorDescontoParcela": 10.00,
+    "valorBrutoParcela": 100.00,
+    "valorLiquidoParcela": 90.00
+  },
+  {
+    "id": {
+      "numeroParcela": 1,
+      "numeroContrato": 456,
+      "numeroAcordo": 123,
+      "codigoProdutoOperacional": 999
+    },
+    "valorDescontoParcela": 10.00,
+    "valorBrutoParcela": 100.00,
+    "valorLiquidoParcela": 90.00
+  }
+]
