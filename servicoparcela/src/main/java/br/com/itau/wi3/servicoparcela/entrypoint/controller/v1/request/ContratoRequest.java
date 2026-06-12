@@ -16,5 +16,5 @@ public record ContratoRequest(
 
         @NotEmpty(message = "Contrato deve possuir ao menos uma parcela")
         @Valid
-        List<ParcelasRequest> parcelas
+        List<ParcelaRequest> parcelas
 ) {}

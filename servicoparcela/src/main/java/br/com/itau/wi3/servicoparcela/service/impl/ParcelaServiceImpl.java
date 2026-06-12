@@ -17,7 +17,7 @@ public class ParcelaServiceImpl implements ParcelaService {
     private final ParcelaServiceMapper parcelaServiceMapper;
 
     @Override
-    public void salvar(final List<ParcelaServiceDto> parcelas) {
-        parcelaRepository.saveAll(parcelaServiceMapper.toEntityList(parcelas));
+    public void registrarParcelas(final List<ParcelaServiceDto> parcelaServiceDtos) {
+        parcelaRepository.saveAll(parcelaServiceMapper.toParcelaEntities(parcelaServiceDtos));
     }
 }
