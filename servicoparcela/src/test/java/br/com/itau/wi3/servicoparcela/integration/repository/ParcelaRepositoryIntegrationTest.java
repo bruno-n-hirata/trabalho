@@ -2,6 +2,8 @@ package br.com.itau.wi3.servicoparcela.integration.repository;
 
 import br.com.itau.wi3.servicoparcela.integration.repository.entity.ParcelaEntity;
 import br.com.itau.wi3.servicoparcela.integration.repository.entity.ParcelaId;
+import br.com.itau.wi3.servicoparcela.support.JsonFixture;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +25,7 @@ class ParcelaRepositoryIntegrationTest {
     @Test
     @DisplayName("Deve salvar uma parcela e recuperá-la pelo id composto")
     void deveSalvarERecuperarParcelaPeloIdComposto() {
-        final ParcelaEntity parcela = parcelaEntity((short) 1, 456L, 123L, 789);
-
-        parcelaRepository.saveAndFlush(parcela);
+        parcelaRepository.saveAndFlush(parcelaEntities().get(0));
 
         final Optional<ParcelaEntity> encontrada =
                 parcelaRepository.findById(parcelaId((short) 1, 456L, 123L, 789));
@@ -43,13 +43,7 @@ class ParcelaRepositoryIntegrationTest {
     @Test
     @DisplayName("Deve salvar várias parcelas com saveAll")
     void deveSalvarVariasParcelas() {
-        final List<ParcelaEntity> parcelas = List.of(
-                parcelaEntity((short) 1, 456L, 123L, 789),
-                parcelaEntity((short) 2, 456L, 123L, 789),
-                parcelaEntity((short) 1, 654L, 123L, 987)
-        );
-
-        parcelaRepository.saveAllAndFlush(parcelas);
+        parcelaRepository.saveAllAndFlush(parcelaEntities());
 
         assertThat(parcelaRepository.findAll()).hasSize(3);
     }
@@ -57,9 +51,9 @@ class ParcelaRepositoryIntegrationTest {
     @Test
     @DisplayName("Deve atualizar a parcela ao salvar novamente com o mesmo id composto")
     void deveAtualizarParcelaComMesmoIdComposto() {
-        parcelaRepository.saveAndFlush(parcelaEntity((short) 1, 456L, 123L, 789));
+        parcelaRepository.saveAndFlush(parcelaEntities().get(0));
 
-        final ParcelaEntity atualizada = parcelaEntity((short) 1, 456L, 123L, 789);
+        final ParcelaEntity atualizada = parcelaEntities().get(0);
         atualizada.setValorDescontoParcela(new BigDecimal("99.99"));
         parcelaRepository.saveAndFlush(atualizada);
 
@@ -84,17 +78,21 @@ class ParcelaRepositoryIntegrationTest {
         assertThat(parcelaRepository.findById(parcelaId((short) 9, 456L, 123L, 789))).isEmpty();
     }
 
+    private List<ParcelaEntity> parcelaEntities() {
+        return JsonFixture.as(
+                "/fixtures/parcela-entities.json",
+                new TypeReference<List<ParcelaEntity>>() {}
+        );
+    }
+
     private ParcelaEntity parcelaEntity(
             final Short numeroParcela,
             final Long numeroContrato,
             final Long numeroAcordo,
             final Integer codigoProdutoOperacional
     ) {
-        final ParcelaEntity parcelaEntity = new ParcelaEntity();
+        final ParcelaEntity parcelaEntity = parcelaEntities().get(0);
         parcelaEntity.setId(parcelaId(numeroParcela, numeroContrato, numeroAcordo, codigoProdutoOperacional));
-        parcelaEntity.setValorDescontoParcela(new BigDecimal("10.00"));
-        parcelaEntity.setValorBrutoParcela(new BigDecimal("100.00"));
-        parcelaEntity.setValorLiquidoParcela(new BigDecimal("90.00"));
         return parcelaEntity;
     }
 

@@ -1,0 +1,17 @@
+{
+  "numeroAcordo": null,
+  "contratos": [
+    {
+      "numeroContrato": 456,
+      "codigoProdutoOperacional": 789,
+      "parcelas": [
+        {
+          "numeroParcela": 1,
+          "valorDescontoParcela": 10.00,
+          "valorBrutoParcela": 100.00,
+          "valorLiquidoParcela": 90.00
+        }
+      ]
+    }
+  ]
+}

@@ -1,18 +1,16 @@
 package br.com.itau.wi3.servicoparcela.entrypoint.controller.v1;
 
 import br.com.itau.wi3.servicoparcela.domains.core.RegistrarParcelasCore;
-import br.com.itau.wi3.servicoparcela.domains.core.dto.ContratoCoreDto;
-import br.com.itau.wi3.servicoparcela.domains.core.dto.ParcelaCoreDto;
 import br.com.itau.wi3.servicoparcela.domains.core.dto.RegistrarParcelasCoreDto;
-import br.com.itau.wi3.servicoparcela.entrypoint.controller.v1.request.ContratoRequest;
-import br.com.itau.wi3.servicoparcela.entrypoint.controller.v1.request.ParcelaRequest;
 import br.com.itau.wi3.servicoparcela.entrypoint.controller.v1.request.RegistrarParcelasRequest;
 import br.com.itau.wi3.servicoparcela.entrypoint.mapper.RegistrarParcelasMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import br.com.itau.wi3.servicoparcela.support.JsonFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,9 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -48,8 +43,6 @@ class ParcelaControllerTest {
 
     private MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     @BeforeEach
     void setUp() {
         final LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
@@ -63,8 +56,14 @@ class ParcelaControllerTest {
     @Test
     @DisplayName("Deve mapear a requisição, executar o core e retornar 201 Created")
     void deveRegistrarParcelasComSucesso() {
-        final RegistrarParcelasRequest request = requestValida();
-        final RegistrarParcelasCoreDto coreDto = coreDtoValido();
+        final RegistrarParcelasRequest request = JsonFixture.as(
+                "/fixtures/registrar-parcelas-request.json",
+                RegistrarParcelasRequest.class
+        );
+        final RegistrarParcelasCoreDto coreDto = JsonFixture.as(
+                "/fixtures/registrar-parcelas-core-dto.json",
+                RegistrarParcelasCoreDto.class
+        );
 
         when(registrarParcelasMapper.toRegistrarParcelasCoreDto(request)).thenReturn(coreDto);
 
@@ -80,135 +79,34 @@ class ParcelaControllerTest {
     @DisplayName("POST /v1/parcelas deve retornar 201 para requisição válida")
     void deveRetornar201ParaRequisicaoValida() throws Exception {
         when(registrarParcelasMapper.toRegistrarParcelasCoreDto(any(RegistrarParcelasRequest.class)))
-                .thenReturn(coreDtoValido());
+                .thenReturn(JsonFixture.as(
+                        "/fixtures/registrar-parcelas-core-dto.json",
+                        RegistrarParcelasCoreDto.class
+                ));
 
         mockMvc.perform(post("/v1/parcelas")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestValida())))
+                        .content(JsonFixture.asString("/fixtures/registrar-parcelas-request.json")))
                 .andExpect(status().isCreated());
 
         verify(registrarParcelasCore).executar(any(RegistrarParcelasCoreDto.class));
     }
 
-    @Test
-    @DisplayName("POST /v1/parcelas deve retornar 400 quando número do acordo for nulo")
-    void deveRetornar400QuandoNumeroAcordoNulo() throws Exception {
-        final RegistrarParcelasRequest request = new RegistrarParcelasRequest(
-                null,
-                List.of(contratoRequestValido())
-        );
-
+    @ParameterizedTest(name = "POST /v1/parcelas deve retornar 400 para {0}")
+    @ValueSource(strings = {
+            "/fixtures/registrar-parcelas-request-numero-acordo-nulo.json",
+            "/fixtures/registrar-parcelas-request-contratos-vazio.json",
+            "/fixtures/registrar-parcelas-request-contrato-sem-parcelas.json",
+            "/fixtures/registrar-parcelas-request-numero-parcela-nulo.json",
+            "/fixtures/registrar-parcelas-request-valor-tres-decimais.json"
+    })
+    @DisplayName("POST /v1/parcelas deve retornar 400 para requisições inválidas")
+    void deveRetornar400ParaRequisicaoInvalida(final String fixture) throws Exception {
         mockMvc.perform(post("/v1/parcelas")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(JsonFixture.asString(fixture)))
                 .andExpect(status().isBadRequest());
 
         verify(registrarParcelasCore, never()).executar(any());
-    }
-
-    @Test
-    @DisplayName("POST /v1/parcelas deve retornar 400 quando lista de contratos for vazia")
-    void deveRetornar400QuandoContratosVazio() throws Exception {
-        final RegistrarParcelasRequest request = new RegistrarParcelasRequest(123L, List.of());
-
-        mockMvc.perform(post("/v1/parcelas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-
-        verify(registrarParcelasCore, never()).executar(any());
-    }
-
-    @Test
-    @DisplayName("POST /v1/parcelas deve retornar 400 quando contrato não possuir parcelas")
-    void deveRetornar400QuandoContratoSemParcelas() throws Exception {
-        final RegistrarParcelasRequest request = new RegistrarParcelasRequest(
-                123L,
-                List.of(new ContratoRequest(456L, 789, List.of()))
-        );
-
-        mockMvc.perform(post("/v1/parcelas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-
-        verify(registrarParcelasCore, never()).executar(any());
-    }
-
-    @Test
-    @DisplayName("POST /v1/parcelas deve retornar 400 quando número da parcela for nulo")
-    void deveRetornar400QuandoNumeroParcelaNulo() throws Exception {
-        final ParcelaRequest parcelaSemNumero = new ParcelaRequest(
-                null,
-                new BigDecimal("10.00"),
-                new BigDecimal("100.00"),
-                new BigDecimal("90.00")
-        );
-        final RegistrarParcelasRequest request = new RegistrarParcelasRequest(
-                123L,
-                List.of(new ContratoRequest(456L, 789, List.of(parcelaSemNumero)))
-        );
-
-        mockMvc.perform(post("/v1/parcelas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-
-        verify(registrarParcelasCore, never()).executar(any());
-    }
-
-    @Test
-    @DisplayName("POST /v1/parcelas deve retornar 400 quando valor da parcela exceder 2 casas decimais")
-    void deveRetornar400QuandoValorParcelaExcederCasasDecimais() throws Exception {
-        final ParcelaRequest parcelaInvalida = new ParcelaRequest(
-                (short) 1,
-                new BigDecimal("10.001"),
-                new BigDecimal("100.00"),
-                new BigDecimal("90.00")
-        );
-        final RegistrarParcelasRequest request = new RegistrarParcelasRequest(
-                123L,
-                List.of(new ContratoRequest(456L, 789, List.of(parcelaInvalida)))
-        );
-
-        mockMvc.perform(post("/v1/parcelas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-
-        verify(registrarParcelasCore, never()).executar(any());
-    }
-
-    private RegistrarParcelasRequest requestValida() {
-        return new RegistrarParcelasRequest(123L, List.of(contratoRequestValido()));
-    }
-
-    private ContratoRequest contratoRequestValido() {
-        return new ContratoRequest(456L, 789, List.of(parcelaRequestValida()));
-    }
-
-    private ParcelaRequest parcelaRequestValida() {
-        return new ParcelaRequest(
-                (short) 1,
-                new BigDecimal("10.00"),
-                new BigDecimal("100.00"),
-                new BigDecimal("90.00")
-        );
-    }
-
-    private RegistrarParcelasCoreDto coreDtoValido() {
-        return new RegistrarParcelasCoreDto(
-                123L,
-                List.of(new ContratoCoreDto(
-                        456L,
-                        789,
-                        List.of(new ParcelaCoreDto(
-                                (short) 1,
-                                new BigDecimal("10.00"),
-                                new BigDecimal("100.00"),
-                                new BigDecimal("90.00")
-                        ))
-                ))
-        );
     }
 }

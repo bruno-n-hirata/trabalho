@@ -1,0 +1,10 @@
+{
+  "numeroAcordo": 123,
+  "contratos": [
+    {
+      "numeroContrato": 456,
+      "codigoProdutoOperacional": 789,
+      "parcelas": []
+    }
+  ]
+}

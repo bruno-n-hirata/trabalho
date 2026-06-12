@@ -1,12 +1,9 @@
 package br.com.itau.wi3.servicoparcela;
 
-import br.com.itau.wi3.servicoparcela.entrypoint.controller.v1.request.ContratoRequest;
-import br.com.itau.wi3.servicoparcela.entrypoint.controller.v1.request.ParcelaRequest;
-import br.com.itau.wi3.servicoparcela.entrypoint.controller.v1.request.RegistrarParcelasRequest;
 import br.com.itau.wi3.servicoparcela.integration.repository.ParcelaRepository;
 import br.com.itau.wi3.servicoparcela.integration.repository.entity.ParcelaEntity;
 import br.com.itau.wi3.servicoparcela.integration.repository.entity.ParcelaId;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import br.com.itau.wi3.servicoparcela.support.JsonFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,9 +29,6 @@ class RegistrarParcelasIntegrationTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
     private ParcelaRepository parcelaRepository;
 
     @BeforeEach
@@ -46,38 +39,7 @@ class RegistrarParcelasIntegrationTest {
     @Test
     @DisplayName("Deve registrar as parcelas de todos os contratos do acordo e persistir no banco")
     void deveRegistrarParcelasEPersistirNoBanco() throws Exception {
-        final RegistrarParcelasRequest request = new RegistrarParcelasRequest(
-                123L,
-                List.of(
-                        new ContratoRequest(456L, 789, List.of(
-                                new ParcelaRequest(
-                                        (short) 1,
-                                        new BigDecimal("10.00"),
-                                        new BigDecimal("100.00"),
-                                        new BigDecimal("90.00")
-                                ),
-                                new ParcelaRequest(
-                                        (short) 2,
-                                        new BigDecimal("20.00"),
-                                        new BigDecimal("200.00"),
-                                        new BigDecimal("180.00")
-                                )
-                        )),
-                        new ContratoRequest(654L, 987, List.of(
-                                new ParcelaRequest(
-                                        (short) 1,
-                                        new BigDecimal("30.00"),
-                                        new BigDecimal("300.00"),
-                                        new BigDecimal("270.00")
-                                )
-                        ))
-                )
-        );
-
-        mockMvc.perform(post("/v1/parcelas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated());
+        registrar("/fixtures/registrar-parcelas-request.json");
 
         final List<ParcelaEntity> parcelas = parcelaRepository.findAll();
         assertThat(parcelas).hasSize(3);
@@ -103,53 +65,34 @@ class RegistrarParcelasIntegrationTest {
     @Test
     @DisplayName("Deve atualizar parcela existente ao registrar novamente o mesmo acordo")
     void deveAtualizarParcelaAoRegistrarNovamente() throws Exception {
-        registrarParcelaUnica(new BigDecimal("90.00"));
-        registrarParcelaUnica(new BigDecimal("85.00"));
+        registrar("/fixtures/registrar-parcelas-request.json");
+        registrar("/fixtures/registrar-parcelas-request-atualizacao.json");
 
-        final List<ParcelaEntity> parcelas = parcelaRepository.findAll();
-        assertThat(parcelas).hasSize(1);
-        assertThat(parcelas.get(0).getValorLiquidoParcela()).isEqualByComparingTo("85.00");
+        assertThat(parcelaRepository.findAll()).hasSize(3);
+
+        final Optional<ParcelaEntity> atualizada =
+                parcelaRepository.findById(parcelaId((short) 1, 456L, 123L, 789));
+        assertThat(atualizada).isPresent();
+        assertThat(atualizada.get().getValorDescontoParcela()).isEqualByComparingTo("15.00");
+        assertThat(atualizada.get().getValorLiquidoParcela()).isEqualByComparingTo("85.00");
     }
 
     @Test
     @DisplayName("Deve retornar 400 e não persistir nada quando a requisição for inválida")
     void deveRetornar400ENaoPersistirQuandoRequisicaoInvalida() throws Exception {
-        final RegistrarParcelasRequest request = new RegistrarParcelasRequest(
-                null,
-                List.of(new ContratoRequest(456L, 789, List.of(
-                        new ParcelaRequest(
-                                (short) 1,
-                                new BigDecimal("10.00"),
-                                new BigDecimal("100.00"),
-                                new BigDecimal("90.00")
-                        )
-                )))
-        );
-
         mockMvc.perform(post("/v1/parcelas")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(JsonFixture.asString(
+                                "/fixtures/registrar-parcelas-request-numero-acordo-nulo.json")))
                 .andExpect(status().isBadRequest());
 
         assertThat(parcelaRepository.findAll()).isEmpty();
     }
 
-    private void registrarParcelaUnica(final BigDecimal valorLiquido) throws Exception {
-        final RegistrarParcelasRequest request = new RegistrarParcelasRequest(
-                123L,
-                List.of(new ContratoRequest(456L, 789, List.of(
-                        new ParcelaRequest(
-                                (short) 1,
-                                new BigDecimal("10.00"),
-                                new BigDecimal("100.00"),
-                                valorLiquido
-                        )
-                )))
-        );
-
+    private void registrar(final String fixture) throws Exception {
         mockMvc.perform(post("/v1/parcelas")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(JsonFixture.asString(fixture)))
                 .andExpect(status().isCreated());
     }
 
