@@ -4,31 +4,28 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
-@Entity
-@Table(name = "parcela")
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
+@Entity
+@Table(name = "tbwi3004_parc_gest_rene")
 public class ParcelaEntity {
 
     @EmbeddedId
     private ParcelaId id;
 
-    @Column(name = "codigo_produto_operacional")
-    private Integer codigoProdutoOperacional;
+    @Column(name = "vlr_desc_parc", nullable = false, precision = 15, scale = 2)
+    private BigDecimal valorDescontoParcela; //TODO: Ver com o Flavio o nome da coluna na tabela
 
-    @Column(name = "valor_parcela")
-    private BigDecimal valorParcela;
+    @Column(name = "vlr_brut_parc", nullable = false, precision = 15, scale = 2)
+    private BigDecimal valorBrutoParcela;
 
-    @Column(name = "data_vencimento")
-    private LocalDate dataVencimento;
+    @Column(name = "vlr_ligo_parc", nullable = false, precision = 15, scale = 2)
+    private BigDecimal valorLiquidoParcela;
 }

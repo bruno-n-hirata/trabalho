@@ -2,7 +2,6 @@ package br.com.itau.wi3.servicoparcela.integration.repository.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,23 +9,22 @@ import lombok.Setter;
 
 import java.io.Serializable;
 
-@Embeddable
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode
+@Embeddable
 public class ParcelaId implements Serializable {
 
-    @Column(name = "numero_contrato")
+    @Column(name = "num_parc_gest_rene", nullable = false)
+    private Short numeroParcela;
+
+    @Column(name = "num_ctrt", nullable = false)
     private Long numeroContrato;
 
-    @Column(name = "numero_parcela")
-    private Integer numeroParcela;
-
-    @Column(name = "numero_acordo")
+    @Column(name = "num_acor", nullable = false)
     private Long numeroAcordo;
 
-    @Column(name = "codigo_produto_operacional")
+    @Column(name = "cod_prod_opel", nullable = false)
     private Integer codigoProdutoOperacional;
 }
