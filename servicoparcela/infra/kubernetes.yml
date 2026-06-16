@@ -1,0 +1,194 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: servicoparcela
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: CreateNamespace=false
+  labels:
+    app: servicoparcela
+spec:
+  generators:
+    - clusters:
+        selector:
+          matchExpressions:
+            - key: cluster
+              operator: In
+              values: [ "wi3blue" ]
+        values:
+          ingressUrl: "wi3blue-genos-mc-f6c9fa5f13c006ad.elb.sa-east-1.amazonaws.com"
+    - clusters:
+        selector:
+          matchExpressions:
+            - key: cluster
+              operator: In
+              values: [ "wi3green" ]
+        values:
+          ingressUrl: "wi3green-genos-mc-95056dc0c97a7398.elb.sa-east-1.amazonaws.com"
+  template:
+    metadata:
+      name: "servicoparcela-{{name}}"
+      labels:
+        app: servicoparcela
+        cluster: "{{name}}"
+        environment: dev
+        component: gateway
+        domain: gestao-acordo
+    spec:
+      destination:
+        namespace: "gestao-acordo"
+        server: "{{server}}"
+      project: default
+      source:
+        repoURL: "https://artifactory.prod.aws.cloud.ihf/artifactory/itau-hn8-helm-release"
+        targetRevision: "v0.2.0"
+        chart: application
+        helm:
+          parameters:
+            - name: global.namespace.enabled
+              value: "false"
+            - name: global.namespace.name
+              value: "gestao-acordo"
+            - name: global.service.port
+              value: "8080"
+            - name: global.fullnameOverride
+              value: "servicoparcela-{{name}}"
+            - name: global.image.repository
+              value: IMG
+            - name: global.autoscaling.enabled
+              value: "true"
+            - name: global.autoscaling.minReplicas
+              value: "1"
+            - name: global.autoscaling.maxReplicas
+              value: "1"
+            - name: global.autoscaling.targetCPUUtilizationPercentage
+              value: "50"
+            - name: global.autoscaling.targetMemoryUtilizationPercentage
+              value: "60"
+            - name: global.resources.requests.cpu
+              value: 500m
+            - name: global.resources.requests.memory
+              value: 512Mi
+            - name: global.resources.limits.cpu
+              value: 1000m
+            - name: global.resources.limits.memory
+              value: 1Gi
+            - name: global.healthcheck.livenessProbe.enabled
+              value: "true"
+            - name: global.healthcheck.livenessProbe.failureThreshold
+              value: "10"
+            - name: global.healthcheck.livenessProbe.initialDelaySeconds
+              value: "90"
+            - name: global.healthcheck.livenessProbe.path
+              value: "/actuator/health"
+            - name: global.healthcheck.livenessProbe.periodSeconds
+              value: "10"
+            - name: global.healthcheck.livenessProbe.port
+              value: "8080"
+            - name: global.healthcheck.livenessProbe.successThreshold
+              value: "1"
+            - name: global.healthcheck.readinessProbe.enabled
+              value: "true"
+            - name: global.healthcheck.readinessProbe.failureThreshold
+              value: "10"
+            - name: global.healthcheck.readinessProbe.initialDelaySeconds
+              value: "60"
+            - name: global.healthcheck.readinessProbe.path
+              value: "/actuator/health"
+            - name: global.healthcheck.readinessProbe.periodSeconds
+              value: "5"
+            - name: global.healthcheck.readinessProbe.port
+              value: "8080"
+            - name: global.healthcheck.readinessProbe.successThreshold
+              value: "1"
+            - name: global.healthcheck.startupProbe.enabled
+              value: "true"
+            - name: global.healthcheck.startupProbe.path
+              value: "/actuator/health"
+            - name: global.healthcheck.startupProbe.port
+              value: "8080"
+            - name: global.healthcheck.startupProbe.initialDelaySeconds
+              value: "10"
+            - name: global.healthcheck.startupProbe.periodSeconds
+              value: "10"
+            - name: global.healthcheck.startupProbe.failureThreshold
+              value: "30"
+            - name: global.healthcheck.startupProbe.successThreshold
+              value: "1"
+            - name: global.ingress.url
+              value: "{{values.ingressUrl}}"
+            - name: global.ingress.enabled
+              value: "false"
+            - name: global.ingress.tls.enabled
+              value: "false"
+            - name: istio.servicemesh.gateway.enabled
+              value: "true"
+            - name: istio.servicemesh.virtualservice.enabled
+              value: "true"
+            - name: istio.servicemesh.destinationrule.enabled
+              value: "true"
+            - name: istio.servicemesh.envoyfilter.transcoder.enabled
+              value: "false"
+            - name: rollouts.enabled
+              value: "true"
+            - name: global.env.app.datadogAutoVersion
+              value: "true"
+          valueFiles:
+            - values.yaml
+          values: |
+            global:
+              ports:
+                - name: http
+                  containerPort: 8080
+                  protocol: TCP
+
+              labels:
+                genos.io/cloudwatch: 'true'
+                tags.datadoghq.com/env: dev
+                tags.datadoghq.com/service: wi3-servicoparcela
+                admission.datadoghq.com/enabled: "true"
+                admission.datadoghq.com/config.mode: "hostip"
+                app: servicoparcela
+                cluster: "{{name}}"
+                component: gateway
+                domain: gestao-acordo
+                environment: dev
+                sigla: wi3
+
+              podLabels:
+                admission.datadoghq.com/enabled: "true"
+                admission.datadoghq.com/config.mode: "hostip"
+                tags.datadoghq.com/env: dev
+                tags.datadoghq.com/service: wi3-servicoparcela
+
+              podAnnotations:
+                ad.datadoghq.com/enabled: "true"
+                ad.datadoghq.com/wi3-servicoparcela.logs: '[{"source":"java","service":"wi3-servicoparcela"}]'
+                admission.datadoghq.com/java-lib.version: v1.38.1
+                ad.datadoghq.com/tags: '{"sigla":"wi3","produto":"recuperacaopjposcompra","sigla_app":"WI3-E1003","jornada":"acordo","component":"gateway","environment":"dev","cluster":"{{name}}"}'
+
+              envFrom:
+                - secretRef:
+                    name: eks-service-servicoparcela-credentials
+              env:
+                app:
+                  regular:
+                    SPRING_PROFILES_ACTIVE: dev
+                    SPRING_CONFIG_LOCATION: optional:classpath:/application.properties,file:///app/config/application.properties
+                    TZ: "America/Sao_Paulo"
+                    DD_TRACE_HEADER_TAGS: "x-itau-apikey:channel,x-itau-correlationid:correlationid"
+                    DD_TRACE_SAMPLING_RULES: '[{"service":"wi3-servicoparcela","resource":"GET /actuator/health","sample_rate":0.0},{"service":"wi3-servicoparcela","resource":"GET /actuator/health/**","sample_rate":0.0}]'
+                    JAVA_OPTS: >-
+                      -XX:+UseG1GC
+                      -XX:MaxGCPauseMillis=200
+                      -XX:G1ReservePercent=10
+                      -XX:InitiatingHeapOccupancyPercent=45
+                      -XX:+ParallelRefProcEnabled
+                      -XX:+UseStringDeduplication
+                      -Xms384m
+                      -Xmx768m
+                      -XX:MaxMetaspaceSize=256m
+                      -XX:MetaspaceSize=128m
+                      -XX:+HeapDumpOnOutOfMemoryError
+                      -XX:HeapDumpPath=/tmp/heapdump.hprof
+                      -XX:+ExitOnOutOfMemoryError
