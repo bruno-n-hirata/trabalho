@@ -192,3 +192,149 @@ spec:
                       -XX:+HeapDumpOnOutOfMemoryError
                       -XX:HeapDumpPath=/tmp/heapdump.hprof
                       -XX:+ExitOnOutOfMemoryError
+                      -XX:MaxDirectMemorySize=128m
+                      -XX:ReservedCodeCacheSize=240m
+                      -XX:+TieredCompilation
+                      -XX:TieredStopAtLevel=1
+                      -XX:+UseCompressedOops
+                      -XX:+UseCompressedClassPointers
+                      -Djava.security.egd=file:/dev/./urandom
+                      -Dfile.encoding=UTF-8
+                      -Duser.timezone=America/Sao_Paulo
+                      -Djava.net.preferIPv4Stack=true
+                      -server
+
+            externalSecrets:
+              enabled: true
+              secrets:
+                - secretName: eks-service-servicoparcela-credentials
+                  refreshInterval: 5m
+                  secretStoreRef:
+                    name: aws-secrets-manager
+                    kind: ClusterSecretStore
+                  target:
+                    name: eks-service-servicoparcela-credentials
+                    creationPolicy: Owner
+                  data:
+                    - secretKey: DATASOURCE_AURORA_SECRET
+                      remoteRef:
+                        key: /secret/eks-service-servicoparcela-credentials
+                        property: DATASOURCE_AURORA_SECRET
+                    - secretKey: DATASOURCE_AURORA_USER
+                      remoteRef:
+                        key: /secret/eks-service-servicoparcela-credentials
+                        property: DATASOURCE_AURORA_USER
+                    - secretKey: DATASOURCE_AURORA_URL
+                      remoteRef:
+                        key: /secret/eks-service-servicoparcela-credentials
+                        property: DATASOURCE_AURORA_URL
+                    - secretKey: DATASOURCE_AURORA_PORTA
+                      remoteRef:
+                        key: /secret/eks-service-servicoparcela-credentials
+                        property: DATASOURCE_AURORA_PORTA
+                    - secretKey: DATASOURCE_AURORA_DATABASE
+                      remoteRef:
+                        key: /secret/eks-service-servicoparcela-credentials
+                        property: DATASOURCE_AURORA_DATABASE
+
+            deployment:
+              annotations:
+                argocd.argoproj.io/sync-wave: "-1"
+
+            serviceAccount:
+              create: true
+              annotations:
+                argocd.argoproj.io/sync-wave: "-2"
+
+            volumes:
+              enabled: true
+
+            configmaps:
+              annotations:
+                argocd.argoproj.io/sync-wave: "-3"
+              roles:
+                application-properties:
+                  enabled: "true"
+                  name: application-properties
+                  volumeConfig: true
+                  mountPath: /app/config
+                  readOnly: true
+                  data:
+                    application.properties: |
+
+                      server.port=8080
+                      application.name=@name@
+                      application.artifactId=@artifactId@
+                      application.version=@version@
+                      parent.version=@quickcloud.version@
+
+                      spring.logging.enabled=true
+
+                      management.endpoints.web.exposure.include=info,health,metrics,prometheus
+                      management.endpoint.health.probes.enabled=true
+
+                      spring.datasource.url=jdbc:mysql://${DATASOURCE_AURORA_URL}:${DATASOURCE_AURORA_PORTA}/${DATASOURCE_AURORA_DATABASE}
+                      spring.datasource.username=${DATASOURCE_AURORA_USER}
+                      spring.datasource.password=${DATASOURCE_AURORA_SECRET}
+                      spring.jpa.open-in-view=false
+                      spring.jpa.properties.hibernate.jdbc.batch_size=50
+
+            certmanager:
+              secretsAnnotations:
+                replicator.v1.mittwald.de/replicate-to: 'istio-system'
+
+            istio:
+              servicemesh:
+                virtualservice:
+                  primaryroute:
+                    enabled: false
+                  hosts:
+                    - "*"
+                  gateways:
+                    - servicoparcela-{{name}}-gateway
+                  roles:
+                    primary:
+                      enabled: true
+                      http:
+                        - name: primary
+                          match:
+                            - uri:
+                                prefix: "/gestao-acordos/v1/"
+                          route:
+                            - destination:
+                                host: "servicoparcela-{{name}}-service.gestao-acordo.svc.cluster.local"
+                                subset: stable
+                                port:
+                                  number: 8080
+                                weight: 100
+                            - destination:
+                                host: "servicoparcela-{{name}}-service.gestao-acordo.svc.cluster.local"
+                                subset: canary
+                                port:
+                                  number: 8080
+                                weight: 0
+
+            rollouts:
+              istioSubsetAnalysisTemplate:
+                enabled: false
+              strategy:
+                default: true
+                canary: true
+                bluegreen: false
+                steps:
+                  - setWeight: 25
+                  - pause: { duration: 30s }
+                  - setWeight: 50
+                  - pause: { duration: 30s }
+                  - setWeight: 75
+                  - pause: { duration: 30s }
+                  - setWeight: 100
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=false
+          - RespectIgnoreDifferences=true
+          - PruneLast=true
